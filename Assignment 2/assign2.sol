@@ -4,10 +4,8 @@ contract assign2 {
     string storedMessage;
     struct Shareholder {
         address participant; // shareholders address
-        uint8 question; // index of question voted on
-        bool vote; //true or false vote
+        uint[] questionsvoted; // indics of question voted on
         uint canvote;
-        bool hasvoted; //true if the person has voted
     }
     
     struct Question {
@@ -36,7 +34,7 @@ contract assign2 {
     event affirmquestion(address uploader, string question, string confirmstr);
     event affirmshareholder(address shareholder, string confirmstr);
     
-    function uploadquestion(string memory askquestion) public payable onlyDirector {
+    function uploadquestion(string memory askquestion) public onlyDirector {
         questions.push(Question({quest: askquestion, isOpen:true, result:0})); // Asked questions are added to the array questions
         
         //can send a notification at this point
@@ -44,7 +42,7 @@ contract assign2 {
     }
     
     // set the question.isOpen to false
-    function closequestion(uint8 index ) public payable onlyDirector{
+    function closequestion(uint8 index ) public onlyDirector{
         Question storage whichquestion = questions[index];
         whichquestion.isOpen = false;
         emit affirmquestion(msg.sender, whichquestion.quest, "Has been closed");
@@ -53,28 +51,41 @@ contract assign2 {
     
     
     //add or remove shareholders
-    function addshareholder(address shareholder ) public payable onlyDirector{
-        require(!shareholders[shareholder].hasvoted, "Shareholder can only vote once");
-        require(shareholders[shareholder].canvote == 0);
-        shareholders[shareholder].canvote = 1;
-        emit affirmshareholder(shareholder, "has been added to shareholders");
+    function addshareholder(address shareholderaddr ) public onlyDirector{
+        
+        require(shareholders[shareholderaddr].participant != shareholderaddr, "Shareholder already exists");
+        
+        shareholders[shareholderaddr].participant = shareholderaddr;
+        shareholders[shareholderaddr].canvote = 1;
+        emit affirmshareholder(shareholderaddr, "has been added to shareholders");
     }
     
-    function removeshareholder(address shareholder) public payable onlyDirector {
-        require(shareholders[shareholder].canvote == 1);
-        shareholders[shareholder].canvote = 0;
-        emit affirmshareholder(shareholder, "has been removed to shareholders");
+    function removeshareholder(address shareholderaddr) public onlyDirector {
+        
+        if(shareholders[shareholderaddr].participant != shareholderaddr)// check if the address exists
+            revert("No such shareholder exists");
+            
+        shareholders[shareholderaddr].canvote = 0; //remove the ability to participate in voting
+        emit affirmshareholder(shareholderaddr, "Can nolonger participate in voting");
     }
     
     function voting(uint8 qindex, bool vote) public{
+        // can vote for multiple questions
         Question storage votingqn = questions[qindex];
         require(votingqn.isOpen == true);
         Shareholder storage voter = shareholders[msg.sender];
         
-        require(!voter.hasvoted, "Shareholder can only vote once");
-        require(voter.canvote == 1);
-        voter.hasvoted =true;
-        voter.question = qindex;
+        //check if voter has already voted on a given question
+        bool foundqn =false;
+        for(uint i =0; i<voter.questionsvoted.length; i++){
+            if(qindex == voter.questionsvoted[i])
+                foundqn =true;
+        }
+        require(!foundqn, "Shareholder has already voted on this question");
+        
+        require(voter.canvote == 1, "You can nolonger vote");
+        voter.questionsvoted.push(qindex); // add index of question voted on
+        
         if(vote){// voting in favor
             questions[qindex].result += 1;
         }else{
@@ -85,9 +96,11 @@ contract assign2 {
     
     //closing of specific question and display results
     function closeandresult(uint8 qindex) public view returns(string memory finalresult){
+        //check if the Shareholder can participate
+        require(shareholders[msg.sender].canvote==1, "Results only visible to acive shareholders");
+        
         Question storage closeqn = questions[qindex];
-        require(closeqn.isOpen == false);
-        // closeqn.isOpen =  false;
+        require(closeqn.isOpen == false, "Question is still Open");
         
         if(closeqn.result >0){
             finalresult = "Majority in favor";
@@ -101,4 +114,5 @@ contract assign2 {
         }
         
     }
+
 }
