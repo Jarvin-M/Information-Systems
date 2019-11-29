@@ -5,7 +5,7 @@ contract assign2 {
     struct Shareholder {
         address participant; // shareholders address
         uint[] questionsvoted; // indics of question voted on
-        uint canvote;
+        bool canparticipate;
     }
     
     struct Question {
@@ -56,7 +56,7 @@ contract assign2 {
         require(shareholders[shareholderaddr].participant != shareholderaddr, "Shareholder already exists");
         
         shareholders[shareholderaddr].participant = shareholderaddr;
-        shareholders[shareholderaddr].canvote = 1;
+        shareholders[shareholderaddr].canparticipate = true;
         emit affirmshareholder(shareholderaddr, "has been added to shareholders");
     }
     
@@ -65,7 +65,7 @@ contract assign2 {
         if(shareholders[shareholderaddr].participant != shareholderaddr)// check if the address exists
             revert("No such shareholder exists");
             
-        shareholders[shareholderaddr].canvote = 0; //remove the ability to participate in voting
+        shareholders[shareholderaddr].canparticipate = false; //remove the ability to participate in voting
         emit affirmshareholder(shareholderaddr, "Can nolonger participate in voting");
     }
     
@@ -83,7 +83,7 @@ contract assign2 {
         }
         require(!foundqn, "Shareholder has already voted on this question");
         
-        require(voter.canvote == 1, "You can nolonger vote");
+        require(voter.canparticipate, "You can nolonger vote");
         voter.questionsvoted.push(qindex); // add index of question voted on
         
         if(vote){// voting in favor
@@ -97,7 +97,7 @@ contract assign2 {
     //closing of specific question and display results
     function closeandresult(uint8 qindex) public view returns(string memory finalresult){
         //check if the Shareholder can participate
-        require(shareholders[msg.sender].canvote==1, "Results only visible to acive shareholders");
+        require(shareholders[msg.sender].canparticipate, "Results only visible to acive shareholders");
         
         Question storage closeqn = questions[qindex];
         require(closeqn.isOpen == false, "Question is still Open");
