@@ -1,7 +1,7 @@
 pragma solidity ^0.5.12;
 
 contract assign2 {
-    string storedMessage;
+
     struct Shareholder {
         address participant; // shareholders address
         uint[] questionsvoted; // indics of question voted on
@@ -95,9 +95,9 @@ contract assign2 {
     
     
     //closing of specific question and display results
-    function closeandresult(uint8 qindex) public view returns(string memory finalresult){
+    function viewresult(uint8 qindex) public view returns(string memory finalresult){
         //check if the Shareholder can participate
-        require(shareholders[msg.sender].canparticipate, "Results only visible to acive shareholders");
+        require(shareholders[msg.sender].canparticipate, "Results only visible to active shareholders");
         
         Question storage closeqn = questions[qindex];
         require(closeqn.isOpen == false, "Question is still Open");
