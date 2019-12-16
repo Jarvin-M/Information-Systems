@@ -96,15 +96,11 @@ function rules = associationRules(minsup,minconf, antimonotone)
                 indexincol = find(ismember(frequentItems{whichsupcol}, allcombin{f},'rows'));
                 % conf(s => I-S)
                 conf = support{i}(itemset)/support{whichsupcol}(indexincol);
-                if antimonotone
-                    if conf < minconf
-                        disantecedents{end+1,1} = allcombin{f};
-                    end
-                end
-
-                if conf >= minconf
-                    rules{ct, 1} = allcombin{f};
-                    rules{ct, 2} = notsubset;
+                if antimonotone && conf < minconf
+                    disantecedents{end+1,1} = allcombin{f};
+                else if conf >= minconf
+                    rules{ct, 1} = items(allcombin{f});
+                    rules{ct, 2} = items(notsubset);
                     rules{ct, 3} = conf;
                     ct = ct+1;
                 end
